@@ -8,8 +8,7 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from llama_index.core.prompts.base import ChatPromptTemplate
-from llama_index.core.chat_engine import SimpleChatEngine
-from llama_index.core import PromptTemplate
+
 
 streaming = True
 similarity_top_k = 4
@@ -80,85 +79,16 @@ TEXT_QA_PROMPT_TMPL_MSGS = [
 ]
 CHAT_TEXT_QA_PROMPT = ChatPromptTemplate(message_templates=TEXT_QA_PROMPT_TMPL_MSGS)
 
-custom_prompt = PromptTemplate(
-    """\
-Given a conversation (between Human and Assistant) and a follow up message from Human, \
-just give a simple one line short reply to the Human\
-do not use emojis or emoticons
- 
-<Chat History>
-{chat_history}
- 
-<Follow Up Message>
-{question}
- 
-<Short Reply>
-"""
-)
- 
-# list of `ChatMessage` objects
-
-custom_chat_history = [
-    ChatMessage(
-        role=MessageRole.USER,
-        content="Give me a one line and concise friendly answer",
-    ),
-    ChatMessage(role=MessageRole.ASSISTANT, content="Okay, sounds good."),
-]
 index.storage_context.persist(persist_dir="./vectorindex")
 query_engine = index.as_query_engine( text_qa_template = CHAT_TEXT_QA_PROMPT)
 
-# chat_engine = index.as_chat_engine(
-#     chat_mode="simple",
-#     # memory=memory,
-#     system_prompt=(
-#         "You are a chatbot, able to have normal interactions, as well as talk, but only in short single sentences"
-#     ),
-# )
-
-
-chat_engine = SimpleChatEngine.from_defaults(
-    llm=llm,
-    # chat_history = custom_chat_history
-    )
-# chat_engine_rag = index.as_chat_engine(
-#     chat_mode="condense_plus_context",
-#     memory=memory,
-#     llm=llm,
-#     context_prompt=(
-#         "You are a chatbot, able to have normal interactions, as well as talk"
-#         "as a sales assistant for mantis , a VR headsets store."
-#         "Here are the relevant documents for the context:\n"
-#         "{documents}"
-#         "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
-#     ),
-#     verbose=False,
-# )
-
-
-
-
-
 def get_query_response(query):
     response = query_engine.query(query)
-
     return response
-
-# def get_chat_response(chat):
-#     response = chat_engine.chat(chat)
-
-#     return response
 
 def get_chat_response(chat):
     response = llm.complete(chat, stopping_tokens=["\n"])
-    print(type(response))
- 
     return str(response)
-
-# def get_rag_chat_response(chat):
-#     response = chat_engine_rag.chat(chat)
-
-#     return response
 
 def restore_index_store(dir_path):
     # rebuild storage context
@@ -169,29 +99,3 @@ def restore_index_store(dir_path):
     return index
     
 
-
-# messages = [
-#     ChatMessage(
-#         role="system",
-#         content="You are a nice friendly chatbot that does casual friendly conversation and gives single line replies.",
-        
-#     ),
-#     ChatMessage(role="user", content="hello how are you doing?")
-# ]
- 
-# response = llm.chat(messages)
-# # resp = llm.complete("hello")
-# print(str(response))
-
-# prompt = """You are a nice friendly chatbot that gives single line replies.
- 
-# User: Hello
-# Sytem: Hi. How are you doing today?
- 
-# User: I am fine. how is the weather?
-# System: The weather is really nice today.
- 
-# User:Should i take an umberella"""
- 
-# response = llm.complete(prompt, stopping_tokens=["\n"])
-# print(response)

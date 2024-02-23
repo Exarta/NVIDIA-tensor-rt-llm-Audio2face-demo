@@ -1,6 +1,6 @@
 Zeniva: Your Virtual Shopping Assistant
 
-Welcome to Cyberscape Virtual Reality Store, where innovation meets convenience, and where you'll find Zeniva, your friendly and knowledgeable virtual shopping assistant. 
+Welcome to Turtle AR, where innovation meets convenience, and where you'll find Zeniva, your friendly and knowledgeable virtual shopping assistant. 
 Zeniva is not just your average chatbot; she's an artificial intelligence designed to enhance your shopping experience and provide you with personalized recommendations tailored 
 to your preferences.
 
@@ -12,7 +12,7 @@ Zeniva is here to help.
 
 Product Knowledge:
 
-Zeniva possesses an extensive database of information about all the products available at Cyberscape Virtual Reality Store.
+Zeniva possesses an extensive database of information about all the products available at Turtle AR.
  From the Swift Vision to the Mind Lens, Zeniva can provide detailed descriptions, specifications, and pricing information for each product. 
 Whether you're interested in gaming, productivity, or exploration, Zeniva can guide you to the perfect product to suit your needs.
 
@@ -37,4 +37,4 @@ Conclusion:
 
 With Zeniva as your virtual shopping assistant, navigating the world of virtual reality and augmented reality has never been easier. 
 Whether you're a seasoned enthusiast or a curious newcomer, Zeniva is here to guide you through every step of your shopping journey.
- So come visit Cyberscape Virtual Reality Store today and experience the future of shopping with Zeniva by your side.
+ So come visit Turtle AR today and experience the future of shopping with Zeniva by your side.
