@@ -1,0 +1,15 @@
+Swift Vision
+
+Price: $699.99
+Description: Swift Vision redefine visual fidelity and comfort. Whether you're delving into virtual worlds or enhancing productivity with holographic displays, these glasses promise an unmatched Augemented Reality journey.
+Tags: Virtual Reality, Productivity, Augmented Reality
+Aqua Gaze
+
+Price: $899.99
+Description: Aqua Gaze glasses lead Augmented Reality innovation. With advanced eye-tracking and customizable interfaces, these glasses adapt seamlessly to your creative, collaborative, or consumption needs.
+Tags: Innovation, Eye-tracking, Customizable
+Mind Lens
+
+Price: $749.99
+Description: Discover the world anew with Mind Lens glasses. Equipped with real-time mapping and location-based overlays, these glasses are your ultimate outdoor adventure and urban exploration companion.
+Tags: Outdoor Adventure, Urban Exploration, Mapping

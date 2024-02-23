@@ -1,0 +1,5 @@
+model
+vectorindex
+audio_from_unreal.wav
+test_audio.wav
+__pycache__
