@@ -12,11 +12,134 @@ import audio2face_pb2_grpc
 import riva.client
 import riva.client.audio_io
 import requests
-from tensor_llama_llm import get_query_response  , get_chat_response
+# from tensor_llama_llm import get_query_response  , get_chat_response
 from pydantic import BaseModel
+import requests
+from pydub import AudioSegment
+# from ffmpeg import input, output
+import os
+from contextlib import asynccontextmanager
+import pprint
 
 
-app = FastAPI()
+#eleven labs vars
+voice_id= "XrExE9yKIg1WjnnlVkGX"
+CHUNK_SIZE = 1024
+model_id = "eleven_turbo_v2"
+url_eleven_labs = "https://api.elevenlabs.io/v1/text-to-speech/XrExE9yKIg1WjnnlVkGX"
+headers_eleven_labs = {
+  "Accept": "audio/mp3",
+  "Content-Type": "application/json",
+  "xi-api-key": "cdadb7bd2efb978c726a897f96cadd1a"
+}
+
+# a2f componenets
+instance = "/World/audio2face/CoreFullface"
+StreamLiveLink =  "/World/audio2face/StreamLivelink"
+BlendShapeSolver =  "/World/audio2face/BlendshapeSolve"
+a2f_player_streaming = "/World/audio2face/audio_player_streaming"
+a2f_player_regular = "/World/audio2face/Player"
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    #a2f_api_vars
+    file_path = r"D:\serve_unreal_sockets\mark_regular.usd"
+    a2f_current_audio_files_folder = "D:/serve_unreal_sockets/"
+    url_load = 'http://localhost:8011/A2F/USD/Load'
+    url_activatestreamlivelink = 'http://localhost:8011/A2F/Exporter/ActivateStreamLivelink'
+    url_a2e_streaming = 'http://localhost:8011/A2F/A2E/EnableStreaming'
+    url_a2e_autogen_onchange = 'http://localhost:8011/A2F/A2E/EnableAutoGenerateOnTrackChange'
+    url_set_track_loop = 'http://localhost:8011/A2F/Player/SetLooping'
+    url_get_current_track = 'http://localhost:8011/A2F/Player/GetCurrentTrack'
+    url_set_current_track = 'http://localhost:8011/A2F/Player/SetTrack'
+    url_get_root_path = 'http://localhost:8011/A2F/Player/GetRootPath'
+    url_set_root_path = 'http://localhost:8011/A2F/Player/SetRootPath'
+    url_setstreamlivelinksettings = 'http://localhost:8011/A2F/Exporter/SetStreamLivelinkSettings'
+    url_get_tracks = 'http://localhost:8011/A2F/Player/GetTracks'
+    
+    #load a2f model
+    body_load_usd = {
+    'file_name': file_path
+    }
+    response_load = requests.post(url=url_load , json=body_load_usd)
+    pprint.pprint(response_load.json())
+    
+    #set root path for audio files
+    body_root_path = {
+        "a2f_player": a2f_player_regular,
+        "dir_path" : a2f_current_audio_files_folder
+    }
+    response_root_path = requests.post(url=url_set_root_path , json=body_root_path)
+    pprint.pprint(f" root path set {response_root_path.json()}")
+    
+    #get tracks in root path
+    body_get_tracks = {
+        "a2f_player": a2f_player_regular
+    }
+    response_tracks = requests.post(url=url_get_tracks , json=body_get_tracks)
+    pprint.pprint(f"tracks list {response_tracks.json()}")
+    
+    
+    #set track
+    body_set_track = {
+        "a2f_player": a2f_player_regular,
+        "file_name": 'output.wav',
+        "time_range": [
+             0,
+            -1
+        ]
+    }
+    
+    response_set_track = requests.post(url=url_set_current_track , json=body_set_track)
+    pprint.pprint(response_set_track.json())
+    
+    
+    #set track loop to false
+    body_set_track_loop = {
+        "a2f_player": a2f_player_regular,
+        "loop_audio": False
+    }
+    response_tracks_loop = requests.post(url=url_set_track_loop , json=body_set_track_loop)
+    pprint.pprint(f"tracks list {response_tracks_loop.json()}")
+    
+    
+    #set live link settings
+    body_live_ink_settings = {
+    "node_path": StreamLiveLink,
+    "values": {"enable_audio_stream": True ,  "livelink_host": 'localhost' }
+    }
+    response_live_link_settings = requests.post(url=url_setstreamlivelinksettings , json=body_live_ink_settings)
+    pprint.pprint(f" livelink setting {response_live_link_settings.json()}")
+    
+    #enablae A2E auto gen on track change
+    body_a2e_auto_gen = {
+    "a2f_instance": instance ,
+    "enable": True 
+    }
+    response_a2e_auto_gen = requests.post(url=url_a2e_autogen_onchange , json=body_a2e_auto_gen)
+    pprint.pprint(F"enable A2E auro gen on change {response_a2e_auto_gen.json()}")
+    
+    #enable A2E streaming
+    body_a2e_stream = {
+    "a2f_instance": instance ,
+    "enable": True 
+    }
+    response = requests.post(url=url_a2e_streaming , json=body_a2e_stream)
+    pprint.pprint(F"enable A2E Streaming {response.json()}")
+    
+    
+    #activate live link
+    body_activate_live_link = {
+    "node_path": StreamLiveLink ,
+    "value": True
+    }
+    response_activate_live_link = requests.post(url=url_activatestreamlivelink , json=body_activate_live_link)
+    pprint.pprint(f" Activate streamlive link {response_activate_live_link.json()}")
+    
+    yield
+        
+
+app = FastAPI(lifespan=lifespan)
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(message)s'
@@ -124,14 +247,53 @@ def convertToAudioAndPlay(question, language):
     push_audio_track(a2f_url, audio_data, sample_rate, instance_name)
     return f"Audio pushed to A2F"
 
+def elevenlabs_api(text):
+    payload = {
+    "model_id": model_id,
+    # "pronunciation_dictionary_locators": [
+    #     {
+    #         "pronunciation_dictionary_id": "<string>",
+    #         "version_id": "<string>"
+    #     }
+    # ],
+    "text": text,
+    "voice_settings": {
+        "similarity_boost": 0.5,
+        "stability": 0.75,
+        # "style": 123,
+        "use_speaker_boost": True
+        }
+    }
+    response = requests.request("POST", url=url_eleven_labs, json=payload, headers=headers_eleven_labs)
 
+    with open('output.mp3', 'wb') as f:
+        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
+                
+    mp3_file = AudioSegment.from_file("output.mp3", format="mp3")
+    wav_file = mp3_file.set_frame_rate(44100).set_channels(1)
+    wav_file.export("output.wav", format="wav")
+    os.remove('output.mp3')
+
+def a2f_api_call():
+    url_play_track = 'http://localhost:8011/A2F/Player/Play'
+    
+    body = {
+        "a2f_player": a2f_player_regular
+    }
+    response = requests.post(url=url_play_track , json=body)
+    pprint.pprint(f" play track {response.json()}")
+    
+     
+    
 def sendtorasa(response):
     res = {
         "sender" : "test",
         "message" : response
     }       
     print("Sending Response to rasa")
-    rasa_output = requests.post(url="http://172.16.15.216:5005/webhooks/rest/webhook", json=res).json()
+    rasa_output = requests.post(url="http://172.16.15.209:5005/webhooks/rest/webhook", json=res).json()
     print(f'response from rasa {rasa_output}')
     return rasa_output[0]['text'], rasa_output[1]['custom']['action']
 
@@ -141,28 +303,34 @@ manager = ConnectionManager()
 async def get():
     return f"server is live !"
 
-@app.post("/rag")
-def get_rag_response(item :Item):
-    response = get_query_response(item.text)
-    print(f"{response}")
-    return response
+# @app.post("/rag")
+# def get_rag_response(item :Item):
+#     response = get_query_response(item.text)
+#     print(f"{response}")
+#     return response
 
-@app.post("/chat")
-async def get_completion_response(data : Request):
-    data = await data.json()
-    response = get_chat_response(data['text'])
-    print(f"{response}")
-    return response
+# @app.post("/chat")
+# async def get_completion_response(data : Request):
+#     data = await data.json()
+#     response = get_chat_response(data['text'])
+#     print(f"{response}")
+#     return response
 
 
 @app.websocket("/ws/bytes")
 async def websocket_endpoint_bytes(websocket: WebSocket):
     await manager.connect(websocket)
+    first_action = 'action=no-action?item_id=null?text=Hello, Welcome to Turtle AR. Let me know if you need help!'
+    first_text = 'Hello, Welcome to Turtle Ay are. Let me know if you need help!'
+    await manager.send_personal_message(f"{first_action}", websocket)
+    elevenlabs_api(first_text)
+    a2f_api_call()
+    # print(convertToAudioAndPlay(first_text , 'en-US'))
     try:
         while True:
             data = await websocket.receive_bytes()
             print(f"message from UE client  :  type : {type(data)} , length  : {len(data)} ")
-            await manager.send_personal_message(f"You audio was recieved in {type(data)} format", websocket)
+            # await manager.send_personal_message(f"You audio was recieved in {type(data)} format", websocket)
                 
                 
             auth = riva.client.Auth(uri=riva_uri)
@@ -182,7 +350,7 @@ async def websocket_endpoint_bytes(websocket: WebSocket):
             offline_config, boosted_words, boosted_lm_score)
             try:
                 
-                response = asr_service.offline_recognize(audio_data, offline_config)
+                response = asr_service.offline_recognize(data, offline_config)
              
                 if (len(response.results[0].alternatives) <= 0):
                     await manager.send_personal_message(f"No Audio recieved", websocket)
